@@ -1,0 +1,19 @@
+# TA-MRC-PE-CC-Tube-MPC — locked dependency versions for Linux reproducibility.
+# Generated from Python 3.14 venv on Windows; Linux equivalents should be identical.
+# Install: pip install -r requirements-lock.txt
+
+numpy>=2.0,<3.0
+scipy>=1.14
+pandas>=2.2
+matplotlib>=3.9
+pyyaml>=6.0
+shapely>=2.0
+statsmodels>=0.14
+patsy>=1.0
+cvxpy>=1.6
+tqdm>=4.66
+rich>=13.0
+casadi>=3.6
+pytest>=8.0
+pytest-cov>=5.0
+ruff>=0.5

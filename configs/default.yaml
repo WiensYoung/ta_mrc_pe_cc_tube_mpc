@@ -1,0 +1,158 @@
+# Default configuration for TA-MRC-PE-CC-Tube-MPC
+# This single file consolidates all runtime parameters (formerly split
+# across default.yaml and controller.yaml — the latter was never loaded
+# by the pipeline and has been absorbed here).
+# All sub-configs can override these defaults.
+
+simulation:
+  dt: 0.5                 # time step [s]
+  horizon: 60.0           # prediction horizon [s]
+  mpc_horizon_steps: 12   # MPC prediction steps (reduced from 20)
+  closed_loop_duration: 600.0  # max episode duration [s]
+  random_seed: 42
+
+uncertainty:
+  epsilon_default: 0.10
+  epsilon_restricted: 0.05
+  epsilon_tss_ferry: 0.025
+  epsilon_tanker_lowvis: 0.01
+  base_ais_position_std: 10.0   # [m]
+  max_ais_delay: 10.0           # [s]
+  ais_dropout_prob: 0.05
+
+reference:
+  U_ref: 7.0             # reference speed [m/s] (~13.6 kn)
+  d_ref: 1000.0          # reference distance [m]
+  d_min: 10.0            # minimum distance for numerical stability [m]
+  eps_v: 1.0e-6           # small velocity for TCPA numerical stability
+
+# Physics disturbance scaling factors.
+# The disturbance coefficients (gamma_shallow, gamma_b0, gamma_s0) are
+# dimensionless.  To convert to physical force [N], multiply by F_ref:
+#   F_ref = 0.5 * rho_water * L * T * U_ref^2
+# For L=180m, T=10.5m, U_ref=7 m/s: F_ref ≈ 4.73e7 N.
+# Set gamma_*_factor = F_ref for physically dimensioned forces.
+physics:
+  gamma_shallow_factor: 4.73e7   # [N] shallow water disturbance scaling
+  gamma_b_factor: 6.62e7         # [N] bank effect disturbance scaling (uses B=30m)
+  gamma_s_factor: 5.60e7         # [N] ship interaction disturbance scaling
+
+tube:
+  rho_0: 5.0             # base tube radius [m]
+  rho_maneuver: 2.0      # maneuver uncertainty contribution [m]
+  use_adaptive: true     # enable scenario-dependent tube scaling (Köhler et al. 2024)
+
+# Adaptive tube scaling bounds (Köhler et al. 2024, Table II)
+tube_adaptive:
+  alpha_encounter_min: 0.5
+  alpha_encounter_max: 2.0
+  alpha_waterway_min: 0.5
+  alpha_waterway_max: 2.0
+  alpha_speed_min: 0.5
+  alpha_speed_max: 3.0
+
+cbf:
+  alpha_cbf: 1.0         # CBF convergence rate parameter
+  max_correction_norm: 0.5  # max allowed CBF correction (rudder angle fraction)
+  qp_solver: "cvxpy"     # "cvxpy" or "scipy"
+  active_constraint_tolerance: 2.0  # [m] — activates CBF when within this margin of safety boundary
+
+fallback:
+  max_consecutive_infeasible: 10  # increased from 5 — allow more recovery attempts
+  max_cbf_correction_threshold: 0.5
+  emergency_distance_factor: 0.5  # d_ij < factor * d_safe triggers emergency
+  extend_safety_domain_factor: 1.2  # reduced from 1.5 — less aggressive expansion
+  recovery_steps_required: 10    # increased from 5 — slower de-escalation
+  recovery_domain_decay: 0.9     # increased from 0.8 — gentler decay
+  slow_speed_factor: 0.3         # reduce speed to this fraction
+  safety_course_change: 10.0     # [deg] emergency course change
+  ais_loss_timeout: 30.0         # [s] before AIS loss triggers fallback
+  runtime_deadline: 0.5          # [s] per control step — relaxed from 0.1
+
+controller:
+  enable_multi_rule: true
+  enable_target_size: true
+  enable_speed_sensitive_domain: true
+  enable_vessel_type_weight: true
+  enable_behavior_uncertainty: true
+  enable_shallow_water: true
+  enable_wind_current: true
+  own_position_std: 1.0          # ownship position uncertainty std [m]
+  enable_bank_effect: true
+  enable_ship_interaction: true
+  enable_chance_constraint: true
+  enable_tube_mpc: true
+  enable_cbf_filter: true
+  enable_fallback: true
+
+# MPC solver configuration
+mpc:
+  horizon: 12                    # reduced from 20 — shorter horizon for faster solve
+  dt: 0.5                        # discretization step [s]
+  # ── Backend selection (single source of truth) ───────────────────────
+  backend: "casadi"              # "casadi" (IPOPT), "jax" (GPU), "scipy" (SLSQP), "sampling" (baseline)
+  solver: "casadi"               # legacy alias for backend
+  use_casadi: true               # legacy compat — overridden by backend
+  max_iterations: 100
+  constraint_tolerance: 1.0e-4
+  cost_tolerance: 1.0e-4
+  enable_hard_collision_constraints: false  # use soft penalties (avoids infeasibility)
+  # ── Soft penalty weights ─────────────────────────────────────────────
+  w_collision_soft: 100.0        # collision avoidance penalty
+  w_channel_violation: 50.0      # channel / enc boundary violation
+  w_speed_error: 1.0             # speed tracking error
+  # ── Control bounds ───────────────────────────────────────────────────
+  rudder_min: -35.0              # [deg]
+  rudder_max: 35.0               # [deg]
+  rudder_rate_max: 5.0           # [deg/s]
+  propeller_min: 0.0             # normalized [0,1]
+  propeller_max: 1.0
+  propeller_rate_max: 0.5        # [1/s]
+  yaw_rate_min: -3.0             # [deg/s]
+  yaw_rate_max: 3.0              # [deg/s]
+  turning_radius_min_factor: 3.0 # multiples of L
+  # ── Cost weights ─────────────────────────────────────────────────────
+  Q_pos:   [10.0, 10.0, 1.0]   # x, y, psi
+  Q_vel:   [1.0, 1.0, 0.5]     # u, v, r
+  R_ctrl:  [0.1, 0.01]          # delta, n
+  S_smooth: [1.0, 0.1]          # delta_dot, n_dot
+  P_terminal: [20.0, 20.0, 2.0] # terminal cost x, y, psi
+  # Rule cost weights (P2-P5, only active when no hard conflict)
+  w_rule_colregs: 10.0
+  w_rule_lane: 5.0
+  w_rule_vts: 2.0
+  w_rule_comfort: 0.1
+  # Physics penalty weights
+  w_bank: 5.0
+  w_ship_interaction: 5.0
+  w_ukc: 10.0
+
+# ── MPC solver selection ──────────────────────────────────────────────
+# When use_sampling = false (default): the Tube-MPC calls MPCProblem.solve()
+#   which uses the backend configured in mpc.backend.
+#   With CasADi available → IPOPT (nonlinear MPC with auto-diff).
+#   Without CasADi      → scipy SLSQP (gradient-free, slower).
+#   With JAX available   → GPU-accelerated L-BFGS-B (auto-diff on GPU).
+#
+# When use_sampling = true (fast baseline): bypasses MPCProblem.solve()
+#   and uses sampling_based_mpc() — random exploration, no gradient
+#   computation.  Suitable for rapid prototyping or baseline comparison,
+#   but NOT the nonlinear MPC described in the paper.
+#
+# IMPORTANT: The paper claims CasADi+IPOPT tube-MPC.  The default below
+#   matches that claim.  Set use_sampling: true only for ablation B3
+#   (deterministic MPC baseline) or quick prototyping.
+use_sampling: false
+sampling_mpc:
+  n_samples: 300
+  exploration_std: [8.0, 0.3]   # std for delta [deg] and n [-]
+
+# ── GPU acceleration via JAX ─────────────────────────────────────────────
+# Activated when mpc.backend = "jax".  Requires: pip install -e ".[jax]"
+# On H100 / CUDA 12: pip install "jax[cuda12]"
+jax:
+  enable_x64: true          # float64 precision (matches CasADi)
+  platform: "gpu"           # "gpu" | "cpu" | "auto"
+  precompile: true          # JIT-compile MPC solve step
+  batch_sampling: true      # vmap for sampling MPC trajectory evaluation
+  batch_physics: true       # batch physics disturbance computations

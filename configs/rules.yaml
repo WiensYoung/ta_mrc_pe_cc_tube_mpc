@@ -1,0 +1,80 @@
+# Multi-source rule configuration
+# Priority P0 (highest) to P5 (lowest)
+
+priorities:
+  P0:  # Inadmissible space constraints (HARD)
+    - land
+    - bridge_pier
+    - non_navigable_depth
+    - forbidden_zone
+    - grounding_risk_area
+    weight: .inf                  # infinite = hard constraint
+
+  P1:  # Immediate safety constraints (HARD)
+    - collision_avoidance
+    - dynamic_safety_domain
+    - cbf_safety_set
+    - minimum_bank_clearance
+    weight: .inf
+
+  P2:  # Encounter responsibility rules (HARD or high-weight soft)
+    - colregs
+    - us_inland_rules
+    - give_way_stand_on_role
+    - head_on
+    - crossing
+    - overtaking
+    default_hard: true            # P2 violations create hard constraints by default
+
+  P3:  # Traffic organization constraints (HARD or soft)
+    - tss_lane
+    - separation_zone
+    - atba
+    - channel_boundary
+    default_hard: true
+
+  P4:  # Local traffic management advice (SOFT)
+    - vts_vmrs
+    - coast_pilot
+    - local_reporting_line
+    - recommended_route
+    default_hard: false
+
+  P5:  # Performance optimization (OBJECTIVE only)
+    - smoothness
+    - energy
+    - comfort
+    - route_tracking
+    default_hard: false
+
+colregs:
+  encounter_definitions:
+    head_on:
+      bearing_range: [355.0, 5.0]      # relative bearing [deg]
+      aspect_range: [0.0, 10.0]
+    crossing_giveway:
+      bearing_range: [5.0, 112.5]
+    crossing_standon:
+      bearing_range: [247.5, 355.0]
+    overtaking_giveway:
+      bearing_range: [112.5, 247.5]
+      aspect_range: [0.0, 22.5]
+  # Rule-specific parameters
+  give_way_action_angle: 30.0  # [deg] recommended course change amplitude
+  stand_on_maintain: true
+  head_on_pass_port: true       # pass port-to-port
+  safe_speed_factor: 0.8        # reduce to this fraction in restricted visibility
+
+inland_rules:
+  # Western Rivers / Great Lakes specific
+  downbound_privilege: true
+  bend_signal_required: true
+  narrow_channel_pass: "one_whistle"  # or "two_whistle"
+
+waterway_zones:
+  tss_lane_width: 500.0           # [m] typical lane width
+  separation_zone_width: 200.0    # [m]
+  inshore_traffic_zone_width: 500.0
+  precautionary_area_radius: 1000.0
+  atba_radius: 2000.0
+  vts_area_buffer: 500.0

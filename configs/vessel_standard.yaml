@@ -1,0 +1,104 @@
+# Standard vessel configurations for quantitative MMG model validation
+# Coefficients sourced from Yasukawa & Yoshimura (2015) and SIMMAN 2020 Workshop
+#
+# These configurations use the standard MMG nondimensionalization:
+#   - Surge: 0.5 * rho * L * d * U^2
+#   - Sway/Yaw: 0.5 * rho * L^2 * d * U^2
+#
+# For everyday use in the collision avoidance framework (where all methods
+# share the same dynamics), the simplified vessel model in vessel.yaml is
+# sufficient. Use these standard configs for quantitative validation against
+# published experimental data (see tests/validation/test_mmg_validation.py).
+
+KVLCC2_loaded:
+  description: "KVLCC2 tanker, loaded condition — SIMMAN 2020 benchmark"
+  type: tanker
+  length: 320.0
+  beam: 58.0
+  draught: 16.5
+  mass: 3.12e8
+  Iz: 3.0e12
+  D_prop: 9.86
+  max_rudder: 35.0
+  max_rudder_rate: 5.0
+  max_yaw_rate: 3.0
+  min_turning_radius: 960.0  # 3 * L
+  design_speed: 7.97  # m/s (~15.5 kn)
+  mmg_version: standard
+  mmg:
+    X_uu: -0.040
+    Y_v: -0.315
+    Y_r: 0.083
+    Y_vv: -0.548
+    Y_rr: 0.020
+    Y_vr: -0.395
+    N_v: -0.137
+    N_r: -0.049
+    N_vv: 0.029
+    N_rr: -0.024
+    N_vr: -0.179
+    Y_delta: 0.046
+    N_delta: -0.023
+    K_T_coeff: 0.18
+
+KCS_design:
+  description: "KCS container ship, design condition — SIMMAN 2020 benchmark"
+  type: container
+  length: 230.0
+  beam: 32.2
+  draught: 10.0
+  mass: 5.2e7
+  Iz: 4.5e11
+  D_prop: 7.9
+  max_rudder: 35.0
+  max_rudder_rate: 5.0
+  max_yaw_rate: 3.0
+  min_turning_radius: 575.0  # 2.5 * L
+  design_speed: 12.35  # m/s (~24.0 kn)
+  mmg_version: standard
+  mmg:
+    X_uu: -0.022
+    Y_v: -0.225
+    Y_r: 0.060
+    Y_vv: -0.450
+    Y_rr: 0.015
+    Y_vr: -0.280
+    N_v: -0.098
+    N_r: -0.042
+    N_vv: 0.020
+    N_rr: -0.018
+    N_vr: -0.127
+    Y_delta: 0.038
+    N_delta: -0.018
+    K_T_coeff: 0.16
+
+KVLCC1_full:
+  description: "KVLCC1 tanker, full load — SIMMAN 2008/2014 benchmark"
+  type: tanker
+  length: 320.0
+  beam: 58.0
+  draught: 20.8
+  mass: 3.9e8
+  Iz: 3.5e12
+  D_prop: 9.86
+  max_rudder: 35.0
+  max_rudder_rate: 5.0
+  max_yaw_rate: 3.0
+  min_turning_radius: 1024.0  # 3.2 * L
+  design_speed: 7.72  # m/s (~15.0 kn, full load)
+  mmg_version: standard
+  mmg:
+    X_uu: -0.045
+    Y_v: -0.340
+    Y_r: 0.090
+    Y_vv: -0.580
+    Y_rr: 0.022
+    Y_vr: -0.420
+    N_v: -0.148
+    N_r: -0.053
+    N_vv: 0.031
+    N_rr: -0.026
+    N_vr: -0.194
+    Y_delta: 0.049
+    N_delta: -0.025
+    K_T_coeff: 0.19

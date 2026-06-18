@@ -1,0 +1,97 @@
+# Vessel parameters for ownship and target ship types.
+# All values are example/benchmark values. See ASSUMPTIONS.md.
+
+ownship:
+  name: "MV_SafePassage"
+  mmsi: "999999001"
+  vessel_type: "cargo"
+  length: 180.0          # L_oa [m]
+  beam: 30.0             # B [m]
+  draught: 10.5          # T [m]
+  mass: 50000000.0       # displacement [kg]
+  Iz: 1.2e11             # yaw moment of inertia [kg*m^2]
+  max_rudder: 35.0       # [deg]
+  max_rudder_rate: 5.0   # [deg/s]
+  max_speed: 15.0        # [kn] -> converted in code
+  min_speed: 0.0         # [kn]
+  max_yaw_rate: 3.0      # [deg/s]
+  min_turning_radius: 3.0  # multiples of L
+
+# MMG simplified model nondimensional derivatives
+mmg:
+  # Surge
+  X_uu: -0.001
+  # Sway
+  Y_v: -0.015
+  Y_r: 0.002
+  Y_vv: -0.03
+  Y_rr: 0.001
+  Y_vr: -0.01
+  # Yaw
+  N_v: -0.005
+  N_r: -0.003
+  N_vv: -0.005
+  N_rr: -0.001
+  N_vr: -0.003
+  # Control derivatives
+  Y_delta: 0.003
+  N_delta: -0.0015
+  # Propeller
+  K_T_coeff: 0.15
+  D_prop: 6.0           # propeller diameter [m]
+  rho_water: 1025.0     # water density [kg/m^3]
+
+vessel_types:
+  cargo:
+    default_length: 180.0
+    default_beam: 30.0
+    default_draught: 10.5
+    domain_weight: 1.0
+  tanker:
+    default_length: 250.0
+    default_beam: 44.0
+    default_draught: 14.0
+    domain_weight: 1.3
+  ferry:
+    default_length: 80.0
+    default_beam: 15.0
+    default_draught: 4.0
+    domain_weight: 0.9
+  tug_barge:
+    default_length: 120.0
+    default_beam: 20.0
+    default_draught: 5.0
+    domain_weight: 1.2
+  small_craft:
+    default_length: 15.0
+    default_beam: 5.0
+    default_draught: 1.5
+    domain_weight: 0.5
+
+# Ship domain additive model parameters (dimensionless)
+domain:
+  # d_base = base_length_factor * (L_i + L_j)
+  # Reduced from 2.0 to 1.5 for more feasible close-quarters scenarios.
+  # 1.5×(L_i+L_j) = 540m for two 180m vessels, still generous vs COLREGs.
+  base_length_factor: 1.5
+  base_width_factor: 4.0
+  # Speed sensitivity: alpha_v
+  alpha_v: 0.15
+  # Size sensitivity: alpha_sz
+  alpha_sz: 0.1
+  # Rule sensitivity: alpha_rule
+  alpha_rule_giveway: 0.5
+  alpha_rule_standon: 0.0    # no reduction for stand-on (was -0.2, dangerously negative)
+  # Uncertainty: alpha_unc
+  alpha_unc: 0.3
+  # Environment: alpha_env
+  alpha_env: 0.2
+  # Bank: beta bank effect coefficients (dimensionless)
+  beta_0: 0.5
+  beta_1: 2.0
+  beta_2: 0.1
+  beta_3: 1.0
+  # Ship interaction: alpha_s (dimensionless)
+  alpha_s: 0.2
+  # Waterway: alpha_waterway
+  alpha_waterway: 0.15

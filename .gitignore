@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data & results (do NOT commit)
+data/
+results/
+
+# Claude
+.claude/
+
+# Environment
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log

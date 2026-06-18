@@ -1,0 +1,95 @@
+# Statistical analysis configuration
+
+tests:
+  paired_ttest: true
+  wilcoxon: true
+  holm_bonferroni: true
+  benjamini_hochberg: true
+  cohens_d: true
+  cliffs_delta: true
+  cluster_bootstrap: true
+  mixed_effects_model: true
+
+significance:
+  alpha: 0.05
+  n_bootstrap: 1000
+  cluster_bootstrap_n: 500
+
+mixed_effects:
+  formula: "Metric ~ Method + Scenario"
+  random_effects: "1|Seed"
+  # Columns used: Method (categorical), Scenario (categorical), Seed (random intercept).
+  # Note: Waterway, ShipType, Disturbance are scenario-level metadata not stored
+  # in the core results CSV. If available via scenario lookup, they can be added
+  # as additional fixed effects.
+  # If statsmodels MixedLM convergence fails, fall back to:
+  fallback: "ols_with_clustered_se"
+
+report:
+  include:
+    - mean
+    - std
+    - ci_95_lower
+    - ci_95_upper
+    - median
+    - iqr
+    - worst_5_percent
+    - p95_runtime
+    - failure_distribution
+    - p_value
+    - effect_size
+  tables:
+    - core_metrics_summary
+    - failure_taxonomy_summary
+    - ablation_comparison
+    - sensitivity_summary
+    - runtime_summary
+
+# Scenario episode weighting for balanced multi-ship coverage (GAP #10 — 2026-06-10)
+# Higher weight → more perturbed episodes generated for that scenario.
+# This ensures 3-4 ship scenarios have sufficient statistical power despite
+# being fewer in number than 1-ship pairwise scenarios.
+#
+# Weights are multiplicative on base `n_episodes_per_scenario`.
+# Default weight = 1.0 (no adjustment).
+scenario_weights:
+  # Core scenarios — restricted waterway
+  S1: 1.0    # 1 target (TSS following)
+  S2: 1.0    # 1 target (ferry crossing)
+  S3: 2.0    # 2 targets (precautionary area) — multi-ship
+  S4: 1.0    # 0 targets (channel keeping)
+  S5: 1.0    # 0 targets (bank passage)
+  S6: 1.0    # 1 target (overtaking)
+  S7: 1.0    # 1 target (AIS dropout)
+  S8: 1.0    # 0 targets (shallow water)
+  S9: 3.0    # 3 targets (TSS multi-vessel) — KEY multi-ship restricted-water scenario
+
+  # Extended scenarios — stress tests
+  E1: 1.0    # 1 target (tanker lane)
+  E2: 2.0    # 2 targets (NY harbor restricted)
+  E3: 1.0    # 1 target (bridge bend)
+  E4: 3.0    # 4 targets (harbor approach convergence) — KEY 4-ship scenario
+
+  # Imazu benchmark — open-water
+  Imazu_01: 1.0   # 1 target (head-on)
+  Imazu_02: 1.0   # 1 target
+  Imazu_03: 1.0   # 1 target
+  Imazu_04: 1.0   # 1 target
+  Imazu_05: 1.0   # 1 target
+  Imazu_06: 1.0   # 1 target
+  Imazu_07: 1.0   # 1 target
+  Imazu_08: 1.0   # 1 target
+  Imazu_09: 1.0   # 1 target
+  Imazu_10: 2.0   # 2 targets (two crossing)
+  Imazu_11: 2.0   # 2 targets (two SB crossing)
+  Imazu_12: 2.0   # 2 targets (two port crossing)
+  Imazu_13: 1.0   # 1 target (overtaking)
+  Imazu_14: 1.0   # 1 target (being overtaken)
+  Imazu_15: 1.0   # 1 target (being overtaken)
+  Imazu_16: 2.0   # 2 targets (head-on + overtaken)
+  Imazu_17: 2.0   # 2 targets (crossing + overtaken)
+  Imazu_18: 2.0   # 2 targets (two head-on)
+  Imazu_19: 2.0   # 2 targets (head-on + crossing)
+  Imazu_20: 3.0   # 3 targets (three converging)
+  Imazu_21: 3.0   # 3 targets (head-on + SB + port crossing)
+  Imazu_22: 4.0   # 4 targets (complex multi-encounter) — MAX complexity

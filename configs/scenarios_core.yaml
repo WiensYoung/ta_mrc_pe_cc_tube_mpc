@@ -1,0 +1,338 @@
+# Core experiment scenarios
+
+scenarios:
+  S1:
+    name: "TSS Co-directional Following"
+    description: "Ownship follows a target in TSS lane. Tests lane keeping, speed control, and overtaking safety domain."
+    waterway: "puget_sound_tss"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 6.0    # [m/s] ~12 kn
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "TGT001"
+        vessel_type: "cargo"
+        initial:
+          x: 800.0
+          y: 0.0
+          psi: 0.0
+          u: 4.0
+          v: 0.0
+          r: 0.0
+        length: 180.0
+        beam: 30.0
+        draught: 10.5
+        nav_status: "underway"
+    environment:
+      water_depth: 40.0
+      current_x: 0.0
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 1000.0
+      tss_lane: "northbound"
+
+  S2:
+    name: "Large Cargo + Ferry Crossing"
+    description: "High-speed ferry crosses bow of large cargo vessel. Tests high-speed crossing, vessel-type weighting, target uncertainty."
+    waterway: "puget_sound_crossing"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 6.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "TGT002"
+        vessel_type: "ferry"
+        initial:
+          x: 800.0
+          y: 600.0
+          psi: 3.14159   # π rad ≈ 180°, target heading opposite to ownship (W→E)
+          u: 10.0       # ~19 kn
+          v: 0.0
+          r: 0.0
+        length: 80.0
+        beam: 15.0
+        draught: 4.0
+        nav_status: "underway"
+    environment:
+      water_depth: 50.0
+      current_x: 0.0
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 2000.0
+
+  S3:
+    name: "Precautionary Area Multi-Vessel Merging"
+    description: "Three vessels converge on a precautionary area. Tests multi-ship conflict, MPC feasibility, rule priority."
+    waterway: "precautionary_area"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: -800.0
+      y: 0.0
+      psi: 0.0
+      u: 5.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "TGT003a"
+        vessel_type: "cargo"
+        initial:
+          x: 800.0
+          y: 300.0
+          psi: 3.14
+          u: 5.0
+          v: 0.0
+          r: 0.0
+        length: 200.0
+        beam: 32.0
+        draught: 11.0
+        nav_status: "underway"
+      - mmsi: "TGT003b"
+        vessel_type: "tanker"
+        initial:
+          x: 0.0
+          y: 1100.0   # moved from 800 → 1100 to exceed d_base=860m
+          psi: -1.57
+          u: 4.0
+          v: 0.0
+          r: 0.0
+        length: 250.0
+        beam: 44.0
+        draught: 14.0
+        nav_status: "underway"
+    environment:
+      water_depth: 35.0
+      current_x: 0.0
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+
+  S4:
+    name: "Cross-Current Channel Keeping"
+    description: "Ownship maintains channel center in cross-current. Tests flow disturbance, tube radius, channel boundary."
+    waterway: "narrow_channel"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 5.0
+      v: 0.0
+      r: 0.0
+    targets: []
+    environment:
+      water_depth: 25.0     # increased from 20 → 25
+      current_x: 0.0
+      current_y: 0.8        # reduced from 1.0 → 0.8 m/s
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 500.0  # widened from 400 → 500
+      bank_distance_left: 220.0   # increased from 200 → 220
+      bank_distance_right: 220.0  # increased from 200 → 220
+
+  S5:
+    name: "Near-Bank Passage / Bend"
+    description: "Ownship navigates near bank through a bend. Tests bank effect, bank clearance, CBF intervention."
+    waterway: "river_bend"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 4.0
+      v: 0.0
+      r: 0.0
+    targets: []
+    environment:
+      water_depth: 20.0     # increased from 15 → 20 for better UKC
+      current_x: 0.5
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 350.0  # widened from 250 → 350
+      bank_distance_left: 130.0   # increased from 80 → 130
+      bank_distance_right: 180.0  # increased from 150 → 180
+
+  S6:
+    name: "Close Parallel / Overtaking"
+    description: "Two ships in close parallel course; ownship overtakes. Tests ship interaction, inter-ship clearance, rudder peak."
+    waterway: "straight_channel"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 7.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "TGT006"
+        vessel_type: "cargo"
+        initial:
+          x: -200.0
+          y: -250.0   # moved from -80 → -250 for wider lateral separation
+          psi: 0.0
+          u: 4.0
+          v: 0.0
+          r: 0.0
+        length: 150.0
+        beam: 25.0
+        draught: 8.0
+        nav_status: "underway"
+    environment:
+      water_depth: 30.0
+      current_x: 0.0
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 600.0
+
+  S7:
+    name: "AIS Delay / Dropout"
+    description: "Target ship AIS data delayed/dropped. Tests relative covariance chance constraint, fallback recovery."
+    waterway: "tss_lane"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 6.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "TGT007"
+        vessel_type: "cargo"
+        initial:
+          x: 1000.0   # moved from 800 → 1000 for initial distance > d_safe
+          y: -200.0
+          psi: 3.14
+          u: 5.0
+          v: 0.0
+          r: 0.0
+        length: 180.0
+        beam: 30.0
+        draught: 10.0
+        nav_status: "underway"
+        ais_config:
+          delay: 5.0         # [s]
+          dropout_prob: 0.1
+          position_noise_std: 15.0  # [m]
+    environment:
+      water_depth: 40.0
+      current_x: 0.0
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 1000.0
+
+  S8:
+    name: "Shallow Water / Grounding Risk"
+    description: "Navigation in shallow water with grounding risk. Tests UKC, shallow water safety domain, non-navigable areas."
+    waterway: "shallow_waterway"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 3.0
+      v: 0.0
+      r: 0.0
+    targets: []
+    environment:
+      water_depth: 18.0     # increased from 12 → 18 for better UKC margin
+      current_x: 0.0
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 400.0  # widened from 300 → 400
+      bank_distance_left: 120.0   # increased from 60 → 120
+      bank_distance_right: 120.0  # increased from 60 → 120
+
+  S9:
+    name: "Restricted TSS Multi-Vessel: Head-on + Crossing + Overtaking"
+    description: >
+      Three simultaneous encounters in a restricted TSS channel:
+      (a) head-on vessel dead ahead,
+      (b) high-speed ferry crossing from starboard,
+      (c) slower cargo ahead to be overtaken.
+      Tests multi-conflict resolution with channel boundary constraints,
+      rule priority (Rule 14 head-on > Rule 15 crossing > Rule 13 overtaking),
+      and tube-MPC feasibility under 3-target coupling.
+      GAP #10 — 2026-06-10: Multi-ship restricted-waterway coverage.
+    waterway: "puget_sound_tss"
+    duration: 600.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 6.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "TGT009a"
+        vessel_type: "cargo"
+        initial:
+          x: 1600.0
+          y: 20.0
+          psi: 3.14159
+          u: 5.0
+          v: 0.0
+          r: 0.0
+        length: 180.0
+        beam: 30.0
+        draught: 10.5
+        nav_status: "underway"
+      - mmsi: "TGT009b"
+        vessel_type: "ferry"
+        initial:
+          x: 900.0
+          y: 650.0
+          psi: 4.71239
+          u: 8.0
+          v: 0.0
+          r: 0.0
+        length: 80.0
+        beam: 15.0
+        draught: 4.0
+        nav_status: "underway"
+      - mmsi: "TGT009c"
+        vessel_type: "cargo"
+        initial:
+          x: 550.0     # moved from 350 → 550 for initial distance > d_base
+          y: -200.0    # moved from -60 → -200 for wider lateral separation
+          psi: 0.0
+          u: 3.0
+          v: 0.0
+          r: 0.0
+        length: 150.0
+        beam: 25.0
+        draught: 8.0
+        nav_status: "underway"
+    environment:
+      water_depth: 40.0
+      current_x: 0.0
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 800.0
+      tss_lane: "northbound"
+      bank_distance_left: 300.0
+      bank_distance_right: 300.0

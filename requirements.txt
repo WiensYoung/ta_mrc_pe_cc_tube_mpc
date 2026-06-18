@@ -1,0 +1,37 @@
+# TA-MRC-PE-CC-Tube-MPC dependency list
+#
+# This file is a compatibility / pip-tools input file.
+# The authoritative dependency declaration is in pyproject.toml.
+# Install commands:
+#   pip install -e .                    # core only
+#   pip install -e ".[solver]"          # core + CasADi/IPOPT
+#   pip install -e ".[dev]"             # core + testing/linting
+#   pip install -e ".[parallel]"        # core + Ray distributed execution
+#   pip install -e ".[all]"             # everything
+#
+# ── Core dependencies (same as pyproject.toml [project].dependencies) ──
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0
+pyyaml>=6.0
+matplotlib>=3.7.0
+shapely>=2.0.0
+statsmodels>=0.13.0
+patsy>=0.5.0
+cvxpy>=1.3.0
+tqdm>=4.64.0
+rich>=13.0.0
+# ── Optional: MPC solver backend (also in pyproject.toml [solver] extra) ──
+casadi>=3.6.0
+# ── Optional: parallel/distributed execution (also in pyproject.toml [parallel] extra) ──
+ray>=2.9.0
+# ── GPU acceleration: JAX backend (also in pyproject.toml [jax] extra) ──
+# Install: pip install -e ".[jax]"
+# For CUDA 12 on H100: pip install "jax[cuda12]"
+jax>=0.4.30
+jaxlib>=0.4.30
+jaxopt>=0.8
+# ── Development (also in pyproject.toml [dev] extra) ──
+pytest>=7.2.0
+pytest-cov>=4.0
+ruff>=0.3

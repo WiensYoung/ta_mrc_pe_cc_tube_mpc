@@ -1,0 +1,213 @@
+# Extended experiment scenarios
+
+scenarios:
+  E1:
+    name: "Prince William Sound Tanker Lane"
+    description: "Tanker in Valdez Arm with grounding risk. Tests UKC margin, grounding avoidance, shallow water dynamics."
+    waterway: "prince_william_sound"
+    duration: 900.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 7.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "EXT001"
+        vessel_type: "tanker"
+        initial:
+          x: 1500.0
+          y: 100.0
+          psi: 3.14
+          u: 6.0
+          v: 0.0
+          r: 0.0
+        length: 280.0
+        beam: 48.0
+        draught: 18.0
+        nav_status: "underway"
+    environment:
+      water_depth: 25.0
+      current_x: 0.3
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 800.0
+      bank_distance_left: 200.0
+      bank_distance_right: 200.0
+
+  E2:
+    name: "NY Harbor Extreme Restricted Water"
+    description: "Constrained navigation in Kill Van Kull / East River analog. Tests extreme bank/ship coupling."
+    waterway: "kill_van_kull"
+    duration: 900.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 3.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "EXT002a"
+        vessel_type: "ferry"
+        initial:
+          x: 300.0
+          y: -40.0
+          psi: 0.0
+          u: 4.0
+          v: 0.0
+          r: 0.0
+        length: 70.0
+        beam: 14.0
+        draught: 3.5
+        nav_status: "underway"
+      - mmsi: "EXT002b"
+        vessel_type: "tug_barge"
+        initial:
+          x: -200.0
+          y: 30.0
+          psi: 3.14
+          u: 2.0
+          v: 0.0
+          r: 0.0
+        length: 120.0
+        beam: 20.0
+        draught: 5.0
+        nav_status: "underway"
+    environment:
+      water_depth: 12.0
+      current_x: 0.5
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 180.0
+      bank_distance_left: 50.0
+      bank_distance_right: 50.0
+
+  E3:
+    name: "Bridge Area + Bend + Tug-Barge"
+    description: "Bridge pier navigation with bend and tug-barge traffic. Stress test for bank/ship/pier coupling."
+    waterway: "bridge_bend"
+    duration: 900.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 3.5
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "EXT003"
+        vessel_type: "tug_barge"
+        initial:
+          x: 200.0
+          y: 30.0
+          psi: 0.0
+          u: 2.5
+          v: 0.0
+          r: 0.0
+        length: 130.0
+        beam: 22.0
+        draught: 5.5
+        nav_status: "underway"
+    environment:
+      water_depth: 10.0
+      current_x: 0.2
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 150.0
+      bank_distance_left: 35.0
+      bank_distance_right: 35.0
+      bridge_piers:
+        - x: 400.0
+          y: -20.0
+          radius: 5.0
+        - x: 400.0
+          y: 20.0
+          radius: 5.0
+
+  E4:
+    name: "Harbor Approach Four-Vessel Convergence"
+    description: >
+      Four vessels converging near harbor entrance in restricted water.
+      Encounters: head-on tanker, starboard-crossing ferry, port-crossing
+      cargo, and slow tug-barge ahead. Tests worst-case multi-ship conflict
+      + bank constraint coupling. GAP #10 — 2026-06-10.
+    waterway: "new_york_harbor"
+    duration: 900.0
+    dt: 0.5
+    ownship_initial:
+      x: 0.0
+      y: 0.0
+      psi: 0.0
+      u: 4.0
+      v: 0.0
+      r: 0.0
+    targets:
+      - mmsi: "EXT004a"
+        vessel_type: "tanker"
+        initial:
+          x: 1200.0
+          y: 50.0
+          psi: 3.14159
+          u: 5.0
+          v: 0.0
+          r: 0.0
+        length: 250.0
+        beam: 44.0
+        draught: 14.0
+        nav_status: "underway"
+      - mmsi: "EXT004b"
+        vessel_type: "ferry"
+        initial:
+          x: 800.0
+          y: 400.0
+          psi: 4.71239
+          u: 9.0
+          v: 0.0
+          r: 0.0
+        length: 70.0
+        beam: 14.0
+        draught: 3.5
+        nav_status: "underway"
+      - mmsi: "EXT004c"
+        vessel_type: "cargo"
+        initial:
+          x: 600.0
+          y: -500.0
+          psi: 1.57080
+          u: 6.0
+          v: 0.0
+          r: 0.0
+        length: 180.0
+        beam: 30.0
+        draught: 10.5
+        nav_status: "underway"
+      - mmsi: "EXT004d"
+        vessel_type: "tug_barge"
+        initial:
+          x: 300.0
+          y: -30.0
+          psi: 0.0
+          u: 2.0
+          v: 0.0
+          r: 0.0
+        length: 120.0
+        beam: 20.0
+        draught: 5.0
+        nav_status: "underway"
+    environment:
+      water_depth: 15.0
+      current_x: 0.3
+      current_y: 0.0
+      wind_x: 0.0
+      wind_y: 0.0
+      channel_width: 350.0
+      bank_distance_left: 80.0
+      bank_distance_right: 80.0
