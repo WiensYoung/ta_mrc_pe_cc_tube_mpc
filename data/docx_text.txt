@@ -1,0 +1,721 @@
+最终版高水平期刊论文实验设计
+面向受限水域多船会遇的目标船要素感知、多源规则约束与物理增强机会管 MPC 避碰控制实验方案
+Final Experimental Design for a High-Level Journal Paper
+Target-Vessel-Aware, Multi-Rule-Constrained and Physics-Enhanced Chance-Constrained Tube-MPC for Multi-Ship Collision Avoidance in Restricted Waters
+项目
+内容
+建议方法简称
+TA-MRC-PE-CC-Tube-MPC
+实验对象
+真实受限水域下的本船-多目标船局部避碰控制
+核心创新定位
+目标船全要素感知、多源规则约束、物理增强动态安全域、概率鲁棒安全控制与系统级验证
+本版约束
+采用 3-DOF/MMG、CC-MPC、tube-MPC、CBF-QP safety filter 与 fallback 作为唯一实验主线；不引入其他控制模型分支。
+适用章节
+可直接作为论文 Experiments / Experimental Design / Validation Protocol 章节基础稿
+版本说明：本最终版严格收敛实验规模，修正 TCPA/DCPA 边界处理、机会约束相对协方差、船岸/船间效应量纲、规则优先级、参数标定、核心/扩展实验集与统计验证方案。
+目录
+1. 实验设计目标与研究假设
+2. 总体实验架构与方法定位
+3. 数据来源、预处理与实验对象定义
+4. 本船与目标船建模
+5. 会遇风险计算与边界条件处理
+6. 多源规则约束与优先级形式化
+7. 目标船要素感知动态安全域
+8. 物理增强模型：浅水、船岸、船间、风流扰动
+9. 不确定性建模与机会约束确定化
+10. TA-MRC-PE-CC-Tube-MPC 控制问题
+11. CBF-QP 运行时安全过滤与 fallback
+12. 实验水域、场景库与核心/扩展实验集
+13. 对比方法、消融实验与敏感性实验
+14. 评价指标、失败模式与统计检验
+15. 参数标定、可复现性与实施流程
+16. 论文结果组织建议与投稿级检查清单
+1. 实验设计目标与研究假设
+本实验设计面向受限水域多船会遇下的自主船局部避碰问题。实验目标不是验证某一成熟控制理论本身是否有效，而是验证成熟控制理论在真实航行约束下的系统化融合能力：当目标船具有真实船舶要素、多源规则同时生效、浅水/船岸/船间效应影响操纵、AIS 存在不确定性且控制需要实时执行时，所提出方法是否仍能生成安全、合规、物理可执行且具有泛化能力的避碰动作。
+本文建议将方法命名为 TA-MRC-PE-CC-Tube-MPC，即 Target-Vessel-Aware, Multi-Rule-Constrained, Physics-Enhanced Chance-Constrained Tube-MPC。其核心不是重新发明 MPC、tube-MPC 或 CBF，而是将目标船全要素、多源规则、物理增强扰动、概率安全边界、鲁棒 tube 边界和运行时安全保障统一到一个可复现实验框架中。
+1.1 研究假设
+编号
+研究假设
+对应验证方式
+H1
+将目标船从点障碍物扩展为包含尺度、速度、船型、吃水、航行状态和不确定性的动态对象，可显著降低安全域侵入率和近失率。
+去除目标船尺度、速度敏感项、船型权重和行为不确定性的消融实验。
+H2
+多源规则约束比单一 COLREGs 约束更适合受限水域，可降低 TSS、航道边界、禁航区和本地规则违反率。
+COLREGs-only、COLREGs-MPC 与多源规则方法对比。
+H3
+将浅水、船岸效应、船间效应和风流扰动纳入动态安全域与 tube 边界，可提升受限水域下的物理可执行性和鲁棒性。
+物理增强消融与参数敏感性实验。
+H4
+相对协方差机会约束与 tube-MPC 组合能够在 AIS 噪声、延迟、丢包和目标船非协同行为下保持更稳定的安全裕度。
+AIS 不确定性、突然转向/加减速和 worst-5% 场景实验。
+H5
+CBF-QP safety filter 与 fallback 可降低 MPC 不可行或极端近距风险下的事故率，但其触发频率应保持在合理范围内。
+CBF/fallback 消融、不可行率和恢复成功率统计。
+2. 总体实验架构与方法定位
+实验采用六层闭环架构：数据层、船舶对象层、规则层、风险预测层、控制层和验证层。该架构保证每个创新点均能映射到可量化实验指标与消融对照。
+层级
+名称
+输入/内容
+输出/作用
+L1
+数据层
+AIS 动态/静态字段、ENC、TSS、VTS/VMRS、Coast Pilot、水深、流场、岸线、桥区、锚地。
+提供轨迹、规则、水域和环境约束。
+L2
+船舶对象层
+本船参数与目标船位置、速度、艏向、COG、尺度、吃水、船型、航行状态和 AIS 质量。
+形成目标船要素感知建模。
+L3
+多源规则层
+COLREGs、U.S. Inland Rules、TSS、VTS/VMRS、ENC、ATBA、本地水域规则。
+输出规则责任、硬/软约束和规则优先级。
+L4
+风险预测层
+DCPA/TCPA、会遇类型、相对运动、目标船预测不确定性、动态安全域。
+输出风险等级、有效安全距离和机会约束边界。
+L5
+控制层
+CC-MPC、tube-MPC、CBF-QP safety filter、fallback。
+生成可执行舵角/推进指令。
+L6
+验证层
+主实验、泛化、极端测试、消融、敏感性、统计检验、ODD/STPA。
+证明安全性、合规性、鲁棒性、实时性和泛化能力。
+本最终版仅采用 3-DOF/MMG 船舶操纵模型作为动力学基础，并以 CC-MPC、tube-MPC、CBF-QP safety filter 与 fallback 构成统一控制与安全验证主线；所有创新均围绕目标船要素、多源规则、物理增强、概率鲁棒控制和验证体系展开。
+3. 数据来源、预处理与实验对象定义
+3.1 数据字段分级
+等级
+字段
+用途
+论文建议
+最小可运行
+mmsi, timestamp, lat, lon, sog, cog
+轨迹重构、相对运动、DCPA/TCPA。
+用于 demo 或早期闭环验证。
+正式论文实验
+heading, vessel_type, length_m, width_m
+目标船尺度、船型、安全域、会遇识别。
+正式结果应至少包含或可靠补全。
+增强实验
+draught_m, nav_status, rot, cargo, transceiver_class
+浅水/UKC、操纵受限、转向趋势、危险品风险、AIS 质量。
+用于高质量结果和安全验证。
+3.2 数据预处理流程
+步骤
+处理内容
+关键要求
+P1
+坐标转换
+将 WGS-84 经纬度转为局部 ENU 或 UTM 坐标，并记录投影原点。
+P2
+时间同步
+将 AIS 轨迹重采样至统一控制周期 Δt，例如 1 s 或 2 s。
+P3
+异常清洗
+剔除速度突变、位置跳变、重复 MMSI、无效 heading 与不合理船长/船宽。
+P4
+轨迹平滑
+采用卡尔曼滤波或 Savitzky-Golay 平滑位置、速度和航向，保留原始数据用于误差估计。
+P5
+缺失补全
+船长、船宽、吃水、船型缺失时采用船型统计默认值，并在 ASSUMPTIONS 表中记录。
+P6
+规则区叠加
+将轨迹与 ENC、TSS、VTS、ATBA、航道边界、桥区、岸线和水深图层进行空间叠加。
+P7
+episode 构造
+从真实 AIS 片段中截取会遇事件，区分真实 episode 与扰动增强 episode。
+论文报告中必须区分真实 AIS episode 数量与扰动增强 episode 数量。例如，一个真实会遇片段通过 10 个噪声种子扩展为 10 个 episode 时，统计独立性不能简单等同于 10 个完全独立真实样本。
+4. 本船与目标船建模
+4.1 本船 3-DOF/MMG 模型
+本船采用 3-DOF/MMG 操纵模型作为主实验动力学基础。状态、速度和控制输入定义为：
+η_i = [x_i, y_i, ψ_i]^T,     ν_i = [u_i, v_i, r_i]^T,     τ_i = [δ_i, n_i]^T
+其中 x_i,y_i 为局部坐标，ψ_i 为艏向，u_i,v_i,r_i 分别为纵荡速度、横荡速度和艏摇角速度，δ_i 为舵角，n_i 为推进指令或螺旋桨转速。控制约束包括最大舵角、舵速、推进变化率、最小回转半径、最大艏摇角速度、航道边界和船岸安全距离。
+4.2 目标船全要素建模
+每艘目标船不再被建模为点障碍物，而被定义为具有尺度、速度、船型、航行状态和预测不确定性的动态船舶对象：
+TS_j = {p_j, v_j, ψ_j, χ_j, L_j, B_j, T_j, type_j, status_j, Σ_j, q_j}
+符号
+含义
+进入控制的位置
+p_j
+目标船位置
+DCPA/TCPA、距离约束、预测均值。
+v_j
+目标船速度
+相对速度、闭合速度、速度敏感安全域。
+ψ_j / χ_j
+目标船艏向 / COG
+会遇识别、船体方向、轨迹预测。
+L_j / B_j
+船长 / 船宽
+本船-来船耦合安全域。
+T_j
+吃水
+UKC、浅水风险、搁浅风险。
+type_j
+船型
+ferry、tug-barge、tanker、small craft 等差异化风险权重。
+status_j
+航行状态
+锚泊、操纵受限、失控目标识别。
+Σ_j
+目标船状态预测协方差
+机会约束、tube 边界。
+q_j
+AIS 数据质量指标
+噪声、延迟、丢包和字段缺失的权重。
+5. 会遇风险计算与边界条件处理
+风险预测层首先计算两船相对位置和相对速度，并对 TCPA/DCPA 的边界情况进行严格处理，以避免目标船低速、锚泊或两船相对速度接近零时出现数值不稳定。
+p_rel^{ij}=p_j-p_i,     v_rel^{ij}=v_j-v_i
+TCPA_raw^{ij}= - (p_rel^{ij})^T v_rel^{ij} / (||v_rel^{ij}||^2 + ε_v)
+TCPA^{ij}=clip(TCPA_raw^{ij}, 0, T_H)
+DCPA^{ij}=||p_rel^{ij}+TCPA^{ij} v_rel^{ij}||
+边界情况
+处理规则
+原因
+||v_rel||≈0
+在分母加入 ε_v，并优先使用当前距离与安全域判断风险。
+避免除零和低速锚泊目标误判。
+TCPA_raw<0
+截断为 0。
+最近点已发生在过去，应以当前距离评估风险。
+TCPA_raw>T_H
+截断为 T_H。
+风险预测仅在 MPC 预测时域内有效。
+目标船 nav_status=anchored
+采用静态/低速障碍物逻辑，同时保留尺度安全域。
+锚泊船不应按普通在航船会遇责任处理。
+目标船 nav_status=not under command
+提高规则优先级和安全域膨胀，主动避让。
+符合航行实际安全原则。
+6. 多源规则约束与优先级形式化
+受限水域中，不同规则可能同时存在且相互冲突。因此实验中必须建立规则优先级，而不能简单将 COLREGs、TSS、VTS、ENC 和本地规则并列叠加。
+优先级
+规则类型
+控制转化
+示例
+P0
+不可违反空间约束
+hard constraint
+陆地、桥墩、不可航水深、禁航区、搁浅风险区域。
+P1
+即时安全约束
+hard/emergency constraint
+碰撞避免、安全域、CBF 安全集、最小船岸距离。
+P2
+会遇责任规则
+rule constraint / directional preference
+COLREGs、U.S. Inland Rules、让路船/直航船责任。
+P3
+交通组织约束
+hard or high-weight soft constraint
+TSS lane、separation zone、ATBA、航道边界。
+P4
+本地交通管理建议
+soft constraint / risk weight
+VTS/VMRS、Coast Pilot、本地报告线与建议航法。
+P5
+性能优化目标
+objective term
+航迹平滑、能耗、航程、舒适性、偏航代价。
+当规则冲突时，优先满足 P0-P1 安全与不可航约束；P2-P4 通过硬约束、软约束或代价权重进入 MPC；P5 仅在安全与规则可行的前提下优化。
+6.1 规则引擎输入输出
+类别
+内容
+输入
+ownship_state, ownship_params, target_ship_states, target_ship_params, waterway_id, ENC/TSS/VTS/ATBA zones, demarcation status, bathymetry, bank distance, visibility, AIS quality。
+输出
+encounter_type, give-way/stand-on role, rule_priority, forbidden set, lane constraint, speed/heading preference, safety-domain scale, target priority, fallback trigger condition。
+7. 目标船要素感知动态安全域
+动态安全域采用本船-目标船耦合形式，基础安全域由两船尺度决定，膨胀项由速度、规则、目标船不确定性、水域环境、船岸效应和船间效应共同决定。所有膨胀项采用加法形式，避免危险因素增加时安全域反而减小的歧义。
+d_safe,eff^{ij}=d_base^{ij}+Δd_speed^{ij}+Δd_size^{ij}+Δd_rule^{ij}+Δd_unc^{ij}+Δd_env^{ij}+Δd_bank^i+Δd_ship^{ij}+Δd_waterway^i
+项
+含义
+实验作用
+d_base^{ij}
+由 L_i,B_i,L_j,B_j 形成的基础几何安全距离。
+保证目标船不是点障碍物。
+Δd_speed^{ij}
+相对速度或闭合速度导致的提前避让距离。
+验证高速 ferry/小船场景。
+Δd_size^{ij}
+大型船、油轮、拖带船的尺度风险膨胀。
+验证船型与尺度影响。
+Δd_rule^{ij}
+让路责任、受限航道、TSS、操纵受限目标导致的规则膨胀。
+验证多源规则作用。
+Δd_unc^{ij}
+AIS 噪声、延迟、丢包、预测误差导致的不确定性膨胀。
+连接机会约束。
+Δd_env^{ij}
+浅水、横流、低能见度等环境风险。
+验证物理增强。
+Δd_bank^i
+近岸、桥区、弯道、岸壁风险。
+验证船岸效应。
+Δd_ship^{ij}
+近距离并航、追越、会船产生的船间效应风险。
+验证船间效应。
+Δd_waterway^i
+港区入口、桥区、锚地、ATBA 等水域特征。
+验证受限水域泛化。
+7.1 量纲一致的安全域膨胀示例
+Δd_speed^{ij}=α_v (L_i+L_j) (U_closing^{ij}/U_ref)
+Δd_ship^{ij}=α_s (L_i+L_j) (U_rel^{ij}/U_ref) (d_ref/max(d_ij,d_min))
+d_bank,safe^i = L_i [β_0 + β_1(B_i/L_i) + β_2(U_i/U_ref)^2 + β_3 I_shallow]
+上述形式中 α、β 均为无量纲系数，U_ref 和 d_ref 为参考速度与参考距离，最终结果保持长度量纲。正式实验中必须通过参数敏感性证明结论不依赖单一人工参数。
+8. 物理增强模型：浅水、船岸、船间、风流扰动
+8.1 浅水效应与 UKC 约束
+λ_h = h/T_i,     UKC = h - T_i
+水深吃水比
+状态
+实验处理
+λ_h > 4.0
+深水
+不启用浅水修正或仅作为基准。
+3.0 < λ_h ≤ 4.0
+轻度浅水
+轻微增加安全域与操纵裕度。
+2.0 < λ_h ≤ 3.0
+中度浅水
+增大回转半径、降低可用舵效。
+1.5 < λ_h ≤ 2.0
+强浅水
+显著增加安全域，限制速度与舵角变化。
+λ_h ≤ 1.5
+高搁浅风险
+作为不可航区或高风险 fallback 区域。
+UKC ≥ UKC_min
+8.2 船岸效应
+船岸效应在正式实验中以三种层级实现：几何安全距离、等效扰动边界和 tube 半径膨胀。若缺少高保真水动力系数，不直接宣称精确船岸水动力建模，而采用保守有界扰动与敏感性分析。
+w_bank ∈ W_bank,     ||w_bank|| ≤ w_bar_bank = γ_b (U_i/U_ref)^2 (d_ref/max(d_bank,d_min))^2
+ρ_bank = k_b (U_i/U_ref)^2 (d_ref/max(d_bank,d_min))^2
+8.3 船间效应
+I_ship^{ij}=1,  if d_ij < k_L(L_i+L_j) or d_lat^{ij}<k_B(B_i+B_j) or TCPA_ij<T_crit
+||w_ship^{ij}|| ≤ γ_s (U_rel^{ij}/U_ref)^2 (d_ref/max(d_ij,d_min))^2
+ρ_ship = k_s Σ_j (U_rel^{ij}/U_ref)^2 (d_ref/max(d_ij,d_min))^2
+8.4 风流扰动
+流场进入运动学，风扰动作为外力或有界扰动进入动力学。正式实验至少设置无流、轻流、中流、强横流四档，强横流仅用于压力测试，避免主结论依赖极端设置。
+9. 不确定性建模与机会约束确定化
+机会约束不直接基于目标船协方差 Σ_j，而基于本船与目标船的相对位置协方差，保证概率安全边界的数学定义更加严谨。
+p_rel^{ij}(t+k)=p_j(t+k)-p_i(t+k)
+p_rel^{ij}(t+k) ~ N( μ_rel^{ij}(t+k), Σ_rel^{ij}(t+k) )
+Σ_rel^{ij}(t+k)=Σ_j(t+k)+Σ_i(t+k)
+若本船定位误差远小于 AIS 目标船预测误差，可令 Σ_i≈0；若使用实际传感器融合结果，则必须保留 Σ_i。
+9.1 概率安全约束
+P( d_ij(t+k) ≥ d_safe,eff^{ij}(t+k) ) ≥ 1 - ε
+9.2 工程保守确定化
+|| μ_rel^{ij}(t+k) || ≥ d_safe,eff^{ij}(t+k) + κ_ε sqrt( λ_max(Σ_rel^{ij}(t+k)) )
+二维位置不确定性建议采用卡方置信椭圆：
+κ_ε = sqrt( χ²_{2,1-ε} )
+风险等级
+ε
+约束含义
+普通水域
+0.10
+允许较低保守性，适合开阔或低密度场景。
+受限水域
+0.05
+正式主实验默认值。
+TSS/港口入口/ferry 横越
+0.025
+交通组织复杂或高速交叉场景。
+油轮航道/低能见度/操纵受限目标
+0.01
+高安全风险场景。
+10. TA-MRC-PE-CC-Tube-MPC 控制问题
+名义 MPC 生成满足规则、动力学和安全约束的控制序列；tube-MPC 使用扰动边界对状态安全集进行收缩，保证在 AIS、环境、船岸和船间扰动下仍具有鲁棒安全裕度。
+min_{u_{0:N-1}} Σ_{k=0}^{N-1} [ ||x_k-x_ref,k||_Q² + ||u_k||_R² + ||Δu_k||_S² + J_rule,k + J_bank,k + J_ship,k ] + ||x_N-x_ref,N||_P²
+约束包括：
+x_{k+1}=f_MMG(x_k,u_k,w_k),     u_k ∈ U,     x_k ∈ X
+δ_min ≤ δ_k ≤ δ_max,     |δ_k-δ_{k-1}|/Δt ≤ δdot_max
+r_min ≤ r_k ≤ r_max,     R_turn,k ≥ R_min
+d_bank,k ≥ d_bank,safe,k,     UKC_k ≥ UKC_min
+|| μ_rel^{ij}(t+k) || ≥ d_safe,eff^{ij}(t+k) + κ_ε sqrt( λ_max(Σ_rel^{ij}(t+k)) ) + ρ_tube,k
+10.1 tube 半径
+ρ_tube = ρ_0 + ρ_AIS + ρ_current + ρ_wind + ρ_shallow + ρ_bank + ρ_ship + ρ_maneuver
+项
+来源
+标定方式
+ρ_0
+模型离散化与基础建模误差
+基线仿真误差统计。
+ρ_AIS
+AIS 噪声、延迟、丢包
+传感器误差统计或扰动注入。
+ρ_current/ρ_wind
+流场与风扰动
+环境数据或分档扰动。
+ρ_shallow
+浅水导致的操纵性能变化
+h/T 分档与敏感性。
+ρ_bank
+船岸效应
+有界扰动模型 + 参数敏感性。
+ρ_ship
+船间效应
+近距并航/追越扰动边界。
+ρ_maneuver
+舵效、推进、操纵滞后
+执行器约束与模型误差。
+11. CBF-QP 运行时安全过滤与 fallback
+CBF-QP 不作为主要创新理论，而作为运行时安全过滤层。其作用是在 MPC 名义控制可能导致安全集边界被突破时，对控制输入进行最小修正。fallback 用于 MPC 不可行、CBF 过度介入、极端近距风险或传感器状态不可用时的保底策略。
+u_safe = argmin_u ||u-u_MPC||²
+s.t.  h_m(x) ≥ 0,     hdot_m(x,u) + α h_m(x) ≥ 0,     u ∈ U
+安全函数
+含义
+h_ship^{ij}=d_ij-d_safe,eff^{ij}
+本船-目标船安全域。
+h_bank=d_bank-d_bank,safe
+船岸安全距离。
+h_UKC=UKC-UKC_min
+富余水深。
+h_lane
+航道、TSS、分隔带和禁航区边界。
+11.1 fallback 触发条件
+触发条件
+fallback 动作
+评价指标
+MPC infeasible 连续超过 M 次
+减速、保持安全航向、转入保守航迹。
+恢复成功率、触发率。
+CBF 修正量超过阈值
+降低速度并增大安全域。
+CBF over-intervention rate。
+d_ij 接近紧急阈值
+执行规则允许的紧急右转/减速策略。
+near-miss 和 collision rate。
+AIS 严重延迟或丢包
+使用保守预测并扩大不确定性边界。
+AIS robustness。
+接近岸壁/不可航水深
+回到航道中心线或停车等待。
+bank/UKC violation。
+12. 实验水域、场景库与核心/扩展实验集
+为避免实验规模过大导致不可落地，本方案将实验划分为核心必做实验集和扩展增强实验集。论文主结果应优先报告核心实验集，扩展实验用于泛化、安全验证和附录补充。
+12.1 核心必做实验集
+类别
+内容
+目的
+主实验水域
+Juan de Fuca / Puget Sound 或等价真实受限水域。
+验证方法主性能。
+泛化水域
+San Francisco Bay 或 New York Harbor 二选一。
+证明跨水域有效性。
+核心场景
+TSS 同向跟驰、交叉会遇、ferry 横越、多船汇入、横流航道保持、AIS 延迟/丢包、近岸通过、近距并航/追越。
+覆盖目标船要素、规则、环境和多船风险。
+核心 baseline
+Deterministic MMG-MPC, COLREGs-MPC, CC-MPC, Tube-MPC, CBF-filtered MPC, Proposed。
+确保对比强度。
+核心消融
+去除目标船尺度、速度敏感项、行为不确定性、船岸效应、船间效应、机会约束、tube、CBF、fallback。
+验证创新点必要性。
+核心统计
+每场景 ≥100 episodes，≥5 seeds，95% CI，paired test，effect size，worst-5%。
+保证统计可靠性。
+12.2 扩展增强实验集
+扩展内容
+用途
+Prince William Sound / Valdez Arm
+油轮航道、搁浅风险和高安全等级验证。
+完整 New York 极端受限水域
+桥区、弯道、tug-barge、强船岸/船间耦合压力测试。
+RL/Safe-RL baseline
+如工作量允许，可作为学习型方法对比；非主实验必需。
+完整 ODD/STPA
+系统安全论证，可放入附录或独立安全验证章节。
+12.3 场景库示例
+场景编号
+场景
+关键考察因素
+S1
+TSS 同向跟驰
+TSS lane、速度控制、追越安全域。
+S2
+大型货船 + ferry 横越
+高速交叉、船型权重、目标船不确定性。
+S3
+Precautionary area 多船汇入
+多船冲突、MPC 可行性、规则优先级。
+S4
+横流下航道保持
+流场扰动、tube 半径、航道边界。
+S5
+近岸通过/弯道
+船岸效应、bank clearance、CBF 介入。
+S6
+近距并航/追越
+船间效应、inter-ship clearance、舵角峰值。
+S7
+AIS 延迟/丢包
+相对协方差机会约束、fallback 恢复。
+S8
+浅水/搁浅风险
+UKC、浅水安全域、不可航区域。
+13. 对比方法、消融实验与敏感性实验
+13.1 对比方法
+编号
+方法
+对比目的
+B1
+COLREGs + VO/OZT
+传统规则反应式基线。
+B2
+Rule-based DWA
+局部搜索型基线。
+B3
+Deterministic MMG-MPC
+无概率/无鲁棒边界的动力学 MPC。
+B4
+COLREGs-MPC
+单一规则 MPC 基线。
+B5
+Chance-Constrained MPC
+验证机会约束价值。
+B6
+Tube-MPC
+验证鲁棒 tube 价值。
+B7
+CBF-filtered MPC
+验证运行时安全过滤价值。
+Proposed
+TA-MRC-PE-CC-Tube-MPC
+完整目标船要素、多源规则、物理增强与概率鲁棒控制方法。
+13.2 消融实验
+编号
+去除内容
+验证问题
+A1
+去除多源规则，仅保留 COLREGs
+多源规则是否降低 TSS/航道/本地规则违反。
+A2
+去除目标船尺度
+来船是否不能被简化为点障碍物。
+A3
+去除目标船速度敏感安全域
+高速来船是否需要更早避让。
+A4
+去除目标船船型权重
+ferry、tug-barge、tanker 等差异是否重要。
+A5
+去除目标船行为不确定性
+AIS 延迟/非协同行为下概率预测是否必要。
+A6
+去除浅水/流场环境项
+环境扰动是否影响物理可执行性。
+A7
+去除船岸效应
+近岸/弯道是否需要 bank-aware 控制。
+A8
+去除船间效应
+并航/追越/狭窄会船是否需要 ship-interaction 边界。
+A9
+去除机会约束
+概率安全边界是否必要。
+A10
+去除 tube-MPC
+扰动鲁棒边界是否必要。
+A11
+去除 CBF-QP safety filter
+运行时安全过滤是否必要。
+A12
+去除 fallback
+极端不可行和紧急场景恢复是否必要。
+13.3 敏感性实验
+变量
+水平
+核心指标
+目标船速度
+3-6, 6-12, 12-18, 18-25 kn
+CPA、避让开始 TCPA、舵角峰值、规则违反率。
+目标船尺度
+0.8, 1.0, 1.2 × 默认尺度
+目标船安全域侵入率、尺度敏感性差异。
+AIS 延迟/丢包
+1/3/5/10 s；5/10/20%
+机会约束鲁棒性、fallback 触发率。
+船岸距离
+0.5L, 1L, 1.5L, 2L, 3L
+bank safety margin、CBF 介入率。
+船间横距
+1B, 2B, 3B, 5B, 8B
+inter-ship clearance、船间效应风险。
+流场扰动
+0, 1, 2, 3 kn 横流
+航道偏差、tube 半径、舵角/舵速约束。
+14. 评价指标、失败模式与统计检验
+14.1 指标体系
+维度
+指标
+安全性
+collision rate, near-miss rate, minimum CPA, ship-domain violation rate, worst-5% CPA。
+规则合规性
+COLREGs/Inland violation, TSS lane violation, separation zone intrusion, ATBA intrusion, stand-on/give-way consistency。
+目标船要素感知
+target-aware safety-domain violation, speed-sensitive CPA degradation, vessel-type risk compliance, target-scale sensitivity gap。
+物理可执行性
+rudder saturation, rudder-rate violation, yaw-rate violation, turning-radius violation, acceleration violation。
+受限水域物理风险
+bank clearance violation, bank safety margin, inter-ship clearance, UKC violation, channel boundary violation。
+鲁棒性与实时性
+AIS-uncertainty robustness, MPC infeasibility, CBF intervention, fallback trigger, recovery success, mean/P95 runtime, deadline miss rate。
+14.2 失败模式分类
+编号
+失败类型
+定义
+F1
+Collision
+两船几何包络或安全碰撞边界发生重叠。
+F2
+Near-miss
+CPA 低于近失阈值但未碰撞。
+F3
+Rule violation
+违反 COLREGs/Inland/TSS/VTS/ENC 等规则。
+F4
+Channel boundary violation
+越过航道边界、禁航区或不可航区域。
+F5
+Bank clearance violation
+船岸距离小于 d_bank,safe。
+F6
+Inter-ship clearance violation
+船间距离小于动态船间安全边界。
+F7
+MPC infeasibility
+优化问题不可行或求解失败。
+F8
+CBF infeasible/over-intervention
+CBF 无可行解或修正量长期过大。
+F9
+Fallback failure
+fallback 后仍无法恢复安全或合规状态。
+F10
+Runtime deadline miss
+控制周期内未完成求解。
+14.3 统计检验方案
+正式实验每类核心场景建议至少 100 episodes、5 个随机种子；极端压力测试可增加至 200 episodes、10 个随机种子。结果报告应包含均值、标准差、95% 置信区间、median/IQR、worst-5% 性能和失败模式分布。
+统计问题
+建议方法
+同一场景下方法两两比较
+paired t-test 或 Wilcoxon signed-rank test。
+多方法多指标比较
+Holm-Bonferroni 或 Benjamini-Hochberg 校正。
+效果大小
+Cohen’s d 或 Cliff’s delta。
+非独立扰动增强 episode
+按真实 AIS 片段聚类 bootstrap 或分层统计。
+多因素影响分析
+mixed-effects model: Metric ~ Method + Scenario + Waterway + ShipType + Disturbance + (1|Seed)。
+极端风险
+worst-5% CPA、P95 runtime、max CBF intervention、fallback recovery。
+15. 参数标定、可复现性与实施流程
+15.1 物理增强参数标定
+参数类别
+标定来源
+敏感性验证
+船岸效应 γ_b,k_b
+文献模型试验、仿真器、近岸 AIS 航迹偏差或保守经验上界。
+γ_b ∈ {0.5,1.0,1.5,2.0}γ_b^0。
+船间效应 γ_s,k_s
+并航/追越仿真、公开水动力经验模型或近距会遇轨迹。
+k_s ∈ {0.5,1.0,1.5,2.0}k_s^0。
+AIS 协方差 Σ_j
+AIS 数据质量、轨迹滤波残差、延迟/丢包注入。
+不同噪声、延迟、丢包等级。
+浅水项 ρ_shallow
+h/T 分档、MMG 浅水修正或保守扰动边界。
+λ_h = 1.5,2.0,3.0,4.0,deep。
+规则权重
+以 hard constraint 为主，soft constraint 仅用于无硬冲突情形。
+权重变化不应改变核心安全结论。
+如果缺少高保真水动力数据，应明确声明船岸/船间效应采用有界扰动与保守安全边界建模，而非精确 CFD 级水动力预测。通过参数敏感性证明方法在合理参数范围内稳定。
+15.2 可复现性要求
+项目
+要求
+数据版本
+记录 AIS、ENC、水深、规则区和环境数据来源、时间范围与预处理脚本版本。
+坐标系统
+记录 ENU/UTM 投影原点、单位、采样周期。
+随机性
+固定随机种子，公开扰动注入范围和场景生成规则。
+参数表
+提供所有安全域系数、tube 系数、机会约束 ε、CBF 参数、fallback 阈值。
+求解器设置
+记录 MPC 预测时域、控制周期、优化器、收敛容差和超时阈值。
+结果报告
+报告所有失败 episode，不仅报告成功案例。
+15.3 实施流程
+阶段
+任务
+输出
+Step 1
+构建数据层与真实 AIS episode。
+清洗轨迹、规则区叠加、水域场景库。
+Step 2
+实现本船/目标船对象模型。
+目标船全要素状态表与预测协方差。
+Step 3
+实现规则引擎和规则优先级。
+会遇类型、规则责任、硬/软约束。
+Step 4
+实现动态安全域和物理增强 tube。
+d_safe,eff、ρ_tube、船岸/船间/浅水项。
+Step 5
+实现 CC-Tube-MPC、CBF-QP 和 fallback。
+闭环控制器。
+Step 6
+运行核心实验集。
+主结果、消融、敏感性。
+Step 7
+运行扩展实验集。
+跨水域泛化、极端压力测试、安全验证。
+Step 8
+统计检验与失败模式分析。
+论文表格、图、显著性结论。
+16. 论文结果组织建议与投稿级检查清单
+16.1 建议论文实验章节结构
+5.1 Experimental Waters and Data Sources
+5.2 Own-Ship and Target-Ship Modeling
+5.3 Multi-Rule Constraint Modeling and Priority Resolution
+5.4 Target-Vessel-Aware Dynamic Ship Domain
+5.5 Physics-Enhanced Disturbance and Tube Boundary Modeling
+5.6 Chance-Constrained Tube-MPC Formulation
+5.7 Runtime Safety Filter and Fallback Strategy
+5.8 Scenario Library and Core/Extended Experimental Sets
+5.9 Baselines, Ablations and Sensitivity Settings
+5.10 Metrics, Statistical Testing and Failure Taxonomy
+5.11 Main Results
+5.12 Target-Vessel Sensitivity Analysis
+5.13 Physics-Enhanced Robustness Analysis
+5.14 Cross-Waterway Generalization and Safety Assessment
+16.2 投稿级检查清单
+检查项
+是否满足
+目标船是否不再作为点障碍物，而是包含尺度、速度、船型、吃水、状态和不确定性？
+必须满足
+TCPA/DCPA 是否处理零相对速度、负 TCPA 和超出预测时域情况？
+必须满足
+机会约束是否基于相对协方差 Σ_rel 而不是单独目标船协方差？
+必须满足
+船岸/船间效应公式是否量纲一致，参数是否有标定或敏感性验证？
+必须满足
+多源规则是否有优先级和冲突处理机制？
+必须满足
+是否区分核心实验和扩展实验，避免方案过大不可落地？
+必须满足
+baseline 是否足够强，是否包含 deterministic MPC、COLREGs-MPC、CC-MPC、tube-MPC 和 CBF-filtered MPC？
+必须满足
+每个创新点是否有对应消融实验和量化指标？
+必须满足
+是否报告失败模式、worst-5%、P95 runtime 和显著性检验？
+必须满足
+是否明确真实 AIS episode 与扰动增强 episode 的独立性？
+必须满足
+最终实验定位
+本最终方案将论文贡献定位为：面向真实受限水域多船会遇问题，构建目标船要素感知、多源规则约束、物理增强动态安全域、相对协方差机会约束、tube-MPC 鲁棒边界、CBF-QP 运行时安全过滤和 fallback 恢复机制的一体化实验验证框架。其研究价值不在于重新提出成熟控制理论，而在于将成熟理论在真实规则、真实水域、真实船舶要素和实际航行物理约束下进行严谨、可复现、可消融和可统计验证的系统化落地。

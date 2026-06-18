@@ -23,9 +23,17 @@ env/
 .DS_Store
 Thumbs.db
 
-# Large data & results (do NOT commit)
-data/
-results/
+# Large data & results (do NOT commit to git, use cloud storage)
+data/processed/
+results/checkpoints/
+results/raw/
+scripts/results/
+
+# Allow small data/results
+# data/raw/        (146MB ENC zips - OK)
+# results/reports/ (text reports - OK)
+# results/figures/ (figures - OK)
+# results/tables/  (tables - OK)
 
 # Claude
 .claude/

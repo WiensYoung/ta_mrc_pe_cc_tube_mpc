@@ -134,6 +134,21 @@ available as a fallback.
 
 See `docs/reproducibility.md` for the full experiment workflow.
 
+### Large File Downloads
+
+Due to GitHub's file size limits, the following large datasets and experiment results
+are hosted on cloud storage. Download and place them in the project root directory.
+
+| Directory | Size | Download Link |
+|-----------|------|---------------|
+| `data/processed/` | ~47 GB | [百度网盘]() / [Google Drive]() |
+| `results/checkpoints/` | ~66 GB | [百度网盘]() / [Google Drive]() |
+| `results/raw/` | ~12 GB | [百度网盘]() / [Google Drive]() |
+
+> **Note**: After downloading, ensure the directory structure matches the expected
+> paths (e.g., `data/processed/ais_juan_de_fuca_puget_sound.csv`).
+> A synthetic data generator (`scripts/build_episodes.py`) is available as a fallback.
+
 ## License
 
 MIT
