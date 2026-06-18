@@ -141,9 +141,9 @@ are hosted on cloud storage. Download and place them in the project root directo
 
 | Directory | Size | Download Link |
 |-----------|------|---------------|
-| `data/processed/` | ~47 GB | [百度网盘]() / [Google Drive]() |
-| `results/checkpoints/` | ~66 GB | [百度网盘]() / [Google Drive]() |
-| `results/raw/` | ~12 GB | [百度网盘]() / [Google Drive]() |
+| `data/processed/` | ~47 GB | [百度网盘](https://pan.baidu.com/s/1F3q5yHJnnVyXxl_ZJa_tlA) (提取码: r25x) |
+| `results/checkpoints/` | ~66 GB | [百度网盘](https://pan.baidu.com/s/1F3q5yHJnnVyXxl_ZJa_tlA) (提取码: r25x) |
+| `results/raw/` | ~12 GB | [百度网盘](https://pan.baidu.com/s/1F3q5yHJnnVyXxl_ZJa_tlA) (提取码: r25x) |
 
 > **Note**: After downloading, ensure the directory structure matches the expected
 > paths (e.g., `data/processed/ais_juan_de_fuca_puget_sound.csv`).
